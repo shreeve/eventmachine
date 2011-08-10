@@ -1392,11 +1392,17 @@ module EventMachine
     if opcode == ConnectionUnbound
       if c = @conns.delete( conn_binding )
         begin
-          if c.method(:unbind).arity == 1
-            c.unbind(data == 0 ? nil : EventMachine::ERRNOS[data])
-          else
-            c.unbind
-          end
+          # NOTE: The following fails on Ruby 1.9.2p290 [Windows 7 (64-bit)] because the
+          #       call to c.method returns a string (eg - "GET") instead of an instance
+          #       of the Method class. Github commit 03f7b5e1dda7d3a0c486 shows when the
+          #       error was introduced (check lib/eventmachine.rb, new lines 1372-1376).
+          #if c.method(:unbind).arity == 1
+          #  c.unbind(data == 0 ? nil : EventMachine::ERRNOS[data])
+          #else
+          #  c.unbind
+          #end
+
+          c.unbind # this 'old' way works...
         rescue
           @wrapped_exception = $!
           stop
